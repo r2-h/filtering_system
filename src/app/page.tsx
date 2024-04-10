@@ -1,6 +1,7 @@
 "use client"
 
 import Product from "@/components/Products/Product"
+import ProductSkeleton from "@/components/Products/ProductSkeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Product as TProduct } from "@/db"
 import { cn } from "@/lib/utils"
@@ -9,6 +10,10 @@ import { QueryResult } from "@upstash/vector"
 import axios from "axios"
 import { ChevronDown, Filter } from "lucide-react"
 import { useState } from "react"
+import { ColorFilter } from "./_components/ColorFilter"
+import { SubcategoriesFilter } from "./_components/SubcategoriesFilter"
+import { ProductState } from "@/lib/validators/product-validator"
+import { SizeFilter } from "./_components/SizeFilter"
 
 const SORT_OPTIONS = [
   { name: "None", value: "none" },
@@ -17,7 +22,12 @@ const SORT_OPTIONS = [
 ] as const
 
 export default function Home() {
-  const [filter, setFilter] = useState({ sort: "none" })
+  const [filter, setFilter] = useState<ProductState>({
+    sort: "none",
+    color: ["white", "beige", "blue", "green", "purple"],
+    price: { isCustom: true, range: [0, 20] },
+    size: ["L", "M", "S"],
+  })
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -29,8 +39,28 @@ export default function Home() {
     },
   })
 
-  console.log(products)
+  const applyArrayFilter = ({
+    category,
+    value,
+  }: {
+    category: keyof Pick<typeof filter, "color" | "size">
+    value: string
+  }) => {
+    const isFilterApplied = filter[category].includes(value as never)
 
+    if (isFilterApplied) {
+      setFilter((prev) => ({
+        ...prev,
+        [category]: prev[category].filter((v) => v !== value),
+      }))
+    } else {
+      setFilter((prev) => ({
+        ...prev,
+        [category]: [...prev[category], value],
+      }))
+    }
+  }
+  console.log(filter)
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
@@ -65,15 +95,19 @@ export default function Home() {
       </div>
 
       <section className="pb-24 pb-6">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4"></div>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+          <div className="hidden lg:block">
+            <SubcategoriesFilter />
+            <ColorFilter filter={filter} applyArrayFilter={applyArrayFilter} />
+            <SizeFilter filter={filter} applyArrayFilter={applyArrayFilter} />
+          </div>
 
-        <div>filters</div>
-
-        <ul className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {products?.map((product) => (
-            <Product product={product.metadata!} key={product.id} />
-          ))}
-        </ul>
+          <ul className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {products
+              ? products.map((product) => <Product product={product.metadata!} key={product.id} />)
+              : new Array(12).fill(null).map((_, i) => <ProductSkeleton key={i} />)}
+          </ul>
+        </div>
       </section>
     </main>
   )

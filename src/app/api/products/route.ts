@@ -2,7 +2,7 @@ import { db } from "@/db"
 
 export const POST = async () => {
   const products = await db.query({
-    topK: 5,
+    topK: 12,
     vector: [0, 0, 0],
     includeMetadata: true,
   })
