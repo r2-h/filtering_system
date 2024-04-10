@@ -1,6 +1,7 @@
 "use client"
 
 import Product from "@/components/Products/Product"
+import ProductSkeleton from "@/components/Products/ProductSkeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Product as TProduct } from "@/db"
 import { cn } from "@/lib/utils"
@@ -8,7 +9,14 @@ import { useQuery } from "@tanstack/react-query"
 import { QueryResult } from "@upstash/vector"
 import axios from "axios"
 import { ChevronDown, Filter } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { ColorFilter } from "./_components/ColorFilter"
+import { SubcategoriesFilter } from "./_components/SubcategoriesFilter"
+import { ProductState } from "@/lib/validators/product-validator"
+import { SizeFilter } from "./_components/SizeFilter"
+import { PriceFilter } from "./_components/PriceFilter"
+import debounce from "lodash.debounce"
+import { EmptyState } from "@/components/Products/EmptyState"
 
 const SORT_OPTIONS = [
   { name: "None", value: "none" },
@@ -17,19 +25,51 @@ const SORT_OPTIONS = [
 ] as const
 
 export default function Home() {
-  const [filter, setFilter] = useState({ sort: "none" })
+  const [filter, setFilter] = useState<ProductState>({
+    sort: "none",
+    color: ["white", "beige", "blue", "green", "purple"],
+    price: { isCustom: true, range: [0, 20] },
+    size: ["L", "M", "S"],
+  })
 
-  const { data: products } = useQuery({
+  const { data: products, refetch } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
       const { data } = await axios.post<QueryResult<TProduct>[]>("http://localhost:3000/api/products", {
-        filter: { sort: filter.sort },
+        filter: { sort: filter.sort, color: filter.color, price: filter.price.range, size: filter.size },
       })
       return data
     },
   })
+  const onSubmit = () => refetch()
+  const debounceSubmit = useCallback(debounce(onSubmit, 400), [])
 
-  console.log(products)
+  // useEffect(() => {
+  //   onSubmit()
+  // }, [filter])
+
+  const applyArrayFilter = ({
+    category,
+    value,
+  }: {
+    category: keyof Pick<typeof filter, "color" | "size">
+    value: string
+  }) => {
+    const isFilterApplied = filter[category].includes(value as never)
+
+    if (isFilterApplied) {
+      setFilter((prev) => ({
+        ...prev,
+        [category]: prev[category].filter((v) => v !== value),
+      }))
+    } else {
+      setFilter((prev) => ({
+        ...prev,
+        [category]: [...prev[category], value],
+      }))
+    }
+    debounceSubmit()
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -50,7 +90,10 @@ export default function Home() {
                     "text-gray-500": option.value !== filter.sort,
                   })}
                   key={option.value}
-                  onClick={() => setFilter((prev) => ({ ...prev, sort: option.value }))}
+                  onClick={() => {
+                    setFilter((prev) => ({ ...prev, sort: option.value }))
+                    debounceSubmit()
+                  }}
                 >
                   {option.name}
                 </button>
@@ -64,16 +107,25 @@ export default function Home() {
         </div>
       </div>
 
-      <section className="pb-24 pb-6">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4"></div>
+      <section className="pb-24 pt-6">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
+          <div className="hidden lg:block">
+            <SubcategoriesFilter />
+            <ColorFilter filter={filter} applyArrayFilter={applyArrayFilter} />
+            <SizeFilter filter={filter} applyArrayFilter={applyArrayFilter} />
+            <PriceFilter filter={filter} setFilter={setFilter} debounceSubmit={debounceSubmit} />
+          </div>
 
-        <div>filters</div>
-
-        <ul className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {products?.map((product) => (
-            <Product product={product.metadata!} key={product.id} />
-          ))}
-        </ul>
+          <ul className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            {products && products.length === 0 ? (
+              <EmptyState />
+            ) : products ? (
+              products.map((product) => <Product product={product.metadata!} key={product.id} />)
+            ) : (
+              new Array(12).fill(null).map((_, i) => <ProductSkeleton key={i} />)
+            )}
+          </ul>
+        </div>
       </section>
     </main>
   )
