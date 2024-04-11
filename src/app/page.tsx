@@ -2,6 +2,7 @@
 
 import Product from "@/components/Products/Product"
 import ProductSkeleton from "@/components/Products/ProductSkeleton"
+import ProductSkeleton from "@/components/Products/ProductSkeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Product as TProduct } from "@/db"
 import { cn } from "@/lib/utils"
@@ -25,6 +26,12 @@ const SORT_OPTIONS = [
 ] as const
 
 export default function Home() {
+  const [filter, setFilter] = useState<ProductState>({
+    sort: "none",
+    color: ["white", "beige", "blue", "green", "purple"],
+    price: { isCustom: true, range: [0, 20] },
+    size: ["L", "M", "S"],
+  })
   const [filter, setFilter] = useState<ProductState>({
     sort: "none",
     color: ["white", "beige", "blue", "green", "purple"],
