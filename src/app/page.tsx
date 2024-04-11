@@ -1,22 +1,22 @@
-"use client"
+'use client'
 
-import Product from "@/components/Products/Product"
-import ProductSkeleton from "@/components/Products/ProductSkeleton"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Product as TProduct } from "@/db"
-import { cn } from "@/lib/utils"
-import { useQuery } from "@tanstack/react-query"
-import { QueryResult } from "@upstash/vector"
-import axios from "axios"
-import { ChevronDown, Filter } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
-import { ColorFilter } from "./_components/ColorFilter"
-import { SubcategoriesFilter } from "./_components/SubcategoriesFilter"
-import { ProductState } from "@/lib/validators/product-validator"
-import { SizeFilter } from "./_components/SizeFilter"
-import { PriceFilter } from "./_components/PriceFilter"
-import debounce from "lodash.debounce"
-import { EmptyState } from "@/components/Products/EmptyState"
+import Product from '@/components/Products/Product'
+import ProductSkeleton from '@/components/Products/ProductSkeleton'
+import {DropdownMenu, DropdownMenuContent, DropdownMenuTrigger} from '@/components/ui/dropdown-menu'
+import {Product as TProduct} from '@/db'
+import {cn} from '@/lib/utils'
+import {useQuery} from '@tanstack/react-query'
+import {QueryResult} from '@upstash/vector'
+import axios from 'axios'
+import {ChevronDown, Filter} from 'lucide-react'
+import {useCallback, useState} from 'react'
+import {ColorFilter} from './_components/ColorFilter'
+import {SubcategoriesFilter} from './_components/SubcategoriesFilter'
+import {ProductState} from '@/lib/validators/product-validator'
+import {SizeFilter} from './_components/SizeFilter'
+import {PriceFilter} from './_components/PriceFilter'
+import debounce from 'lodash.debounce'
+import {EmptyState} from '@/components/Products/EmptyState'
 
 const SORT_OPTIONS = [
   { name: "None", value: "none" },
@@ -24,6 +24,8 @@ const SORT_OPTIONS = [
   { name: "Price: High to Low", value: "price-desc" },
 ] as const
 
+
+// .
 export default function Home() {
   const [filter, setFilter] = useState<ProductState>({
     sort: "none",
