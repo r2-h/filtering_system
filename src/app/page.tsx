@@ -44,10 +44,6 @@ export default function Home() {
   const onSubmit = () => refetch()
   const debounceSubmit = useCallback(debounce(onSubmit, 400), [])
 
-  // useEffect(() => {
-  //   onSubmit()
-  // }, [filter])
-
   const applyArrayFilter = ({
     category,
     value,
